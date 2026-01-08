@@ -1,0 +1,753 @@
+<!doctype html>
+<html lang="ja">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>ネイルカルテ</title>
+
+  <style>
+    :root{
+      --bg:#f2f2f2;
+      --line:#e6e6e6;
+      --text:#222;
+      --muted:#777;
+      --card:#fff;
+      --input:#fff;
+      --radius:6px;
+      --dark:#222;
+      --danger:#d60000;
+    }
+    *{ box-sizing:border-box; }
+    body{
+      margin:0;
+      background:var(--bg);
+      color:var(--text);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,"Noto Sans JP",sans-serif;
+    }
+    .titlebar{
+      background:#efefef;
+      border-bottom:1px solid var(--line);
+      padding:12px 14px;
+      text-align:center;
+      font-weight:800;
+      letter-spacing:.02em;
+      position:sticky;
+      top:0;
+      z-index:10;
+    }
+    .sheet{
+      max-width:720px;
+      margin:0 auto;
+      background:var(--card);
+      border-top:1px solid var(--line);
+      border-bottom:1px solid var(--line);
+    }
+    .row{
+      display:flex;
+      gap:12px;
+      padding:14px;
+      border-top:1px solid var(--line);
+      align-items:flex-start;
+    }
+    .row:first-child{ border-top:0; }
+    .label{
+      width:180px;
+      min-width:180px;
+      font-weight:800;
+      padding-top:10px;
+      line-height:1.2;
+    }
+    .label .req{ margin-left:4px; font-weight:900; }
+    .control{ flex:1; }
+    .hint{
+      font-size:12px;
+      color:var(--muted);
+      margin:0 0 6px;
+      line-height:1.4;
+    }
+    input, select, textarea{
+      width:100%;
+      border:1px solid #d6d6d6;
+      border-radius:var(--radius);
+      padding:0 12px;
+      background:var(--input);
+      font-size:16px;
+      outline:none;
+    }
+    input, select{ height:46px; }
+    textarea{
+      padding:10px 12px;
+      min-height:110px;
+      resize:vertical;
+      font-size:16px;
+    }
+    input:focus, select:focus, textarea:focus{
+      border-color:#9bbcff;
+      box-shadow:0 0 0 3px rgba(11,99,255,.12);
+    }
+
+    .subControl{ margin-top:10px; }
+
+    /* アレルギー選択肢：縦並び */
+    .chkGrid{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      margin-top:6px;
+    }
+    .chk{
+      width:100%;
+      display:flex;
+      align-items:center;
+      gap:10px;
+      padding:12px 12px;
+      border:1px solid #d6d6d6;
+      border-radius:12px;
+      background:#fff;
+      font-weight:800;
+      user-select:none;
+    }
+    .chk input{
+      width:20px;
+      height:20px;
+      accent-color:#111;
+    }
+
+    /* 同意/ポップアップ */
+    .agreeBlock{
+      display:flex;
+      flex-direction:column;
+      gap:10px;
+      padding-top:2px;
+    }
+    .agreeLine{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-weight:800;
+      color:#222;
+      user-select:none;
+    }
+    .agreeLine input{
+      width:20px;
+      height:20px;
+      accent-color:#111;
+    }
+    .pillGreen{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      height:44px;
+      padding:0 16px;
+      border-radius:999px;
+      border:2px solid #111;
+      background:#fff;
+      color:#111;
+      font-weight:900;
+      cursor:pointer;
+      width:100%;
+    }
+    .pillGreen:hover{ background:#f4f4f4; }
+
+    /* modal */
+    .modalOverlay{
+      position:fixed;
+      inset:0;
+      background:rgba(0,0,0,.55);
+      display:none;
+      align-items:center;
+      justify-content:center;
+      padding:18px;
+      z-index:100;
+    }
+    .modal{
+      width:min(680px,100%);
+      background:#fff;
+      border-radius:14px;
+      overflow:hidden;
+      box-shadow:0 20px 60px rgba(0,0,0,.25);
+      max-height:85vh;
+      display:flex;
+      flex-direction:column;
+    }
+    .modalHeader{
+      padding:14px 16px;
+      font-weight:900;
+      border-bottom:1px solid var(--line);
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+    }
+    .modalClose{
+      border:0;
+      background:#f2f2f2;
+      border-radius:10px;
+      padding:8px 10px;
+      cursor:pointer;
+      font-weight:800;
+    }
+    .modalBody{
+      padding:14px 16px;
+      overflow:auto;
+      line-height:1.75;
+      font-size:14px;
+      color:#222;
+    }
+    .modalFooter{
+      padding:12px 16px;
+      border-top:1px solid var(--line);
+      display:flex;
+      gap:10px;
+    }
+    .agreeBtn{
+      flex:1;
+      height:46px;
+      border:0;
+      border-radius:12px;
+      background:#111;
+      color:#fff;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+    .agreeBtn:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+    .danger{
+      color:var(--danger);
+      font-weight:900;
+    }
+    .modalBody h3{
+      margin:10px 0 6px;
+      font-size:15px;
+    }
+    .modalBody ul{
+      margin:6px 0 0 18px;
+      padding:0;
+    }
+
+    .actionsRow{
+      padding:18px 14px 22px;
+      border-top:1px solid var(--line);
+      background:#fff;
+      position:sticky;
+      bottom:0;
+      z-index:5;
+      padding-bottom:calc(22px + env(safe-area-inset-bottom));
+    }
+    .twoBtns{ display:flex; gap:12px; }
+    .pillConfirm{
+      flex:1;
+      height:52px;
+      border-radius:999px;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+      border:2px solid #111;
+      background:#fff;
+      color:#111;
+    }
+    .pillConfirm:disabled{
+      opacity:.45;
+      cursor:not-allowed;
+    }
+
+    /* confirm view */
+    .confirm{ display:none; padding:14px; }
+    .confirm h2{ margin:8px 0 12px; font-size:18px; }
+    .summary{
+      border:1px solid var(--line);
+      border-radius:12px;
+      overflow:hidden;
+      background:#fff;
+    }
+    .sumRow{
+      display:flex;
+      gap:12px;
+      padding:12px 14px;
+      border-top:1px solid var(--line);
+    }
+    .sumRow:first-child{ border-top:0; }
+    .sumKey{
+      width:200px;
+      min-width:200px;
+      color:#111;
+      font-weight:900;
+    }
+    .sumVal{ flex:1; color:#222; word-break:break-word; }
+    .confirmActions{ display:flex; gap:12px; margin-top:14px; }
+    .ghost{
+      flex:1;
+      height:52px;
+      border-radius:999px;
+      border:2px solid #666;
+      background:#fff;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+      color:#111;
+    }
+    .send{
+      flex:1;
+      height:52px;
+      border-radius:999px;
+      border:0;
+      background:var(--dark);
+      color:#fff;
+      font-size:16px;
+      font-weight:900;
+      cursor:pointer;
+    }
+
+    @media (max-width:520px){
+      .label{ width:140px; min-width:140px; }
+      .sumKey{ width:140px; min-width:140px; }
+    }
+
+    /* スマホ最適化 */
+    html{ -webkit-text-size-adjust:100%; }
+    .sheet{ max-width:640px; width:100%; }
+    .row{
+      display:grid;
+      grid-template-columns:140px 1fr;
+      align-items:center;
+      gap:10px;
+    }
+    .label{ width:auto; min-width:0; padding-top:0; font-size:15px; }
+    @media (max-width:380px){
+      .row{ grid-template-columns:1fr; align-items:start; }
+      .label{ padding-top:0; }
+    }
+  </style>
+</head>
+
+<body>
+  <div class="titlebar">ネイルカルテ</div>
+
+  <!-- 入力画面 -->
+  <main class="sheet" id="inputView">
+    <form id="karteForm" novalidate>
+      <div class="row">
+        <div class="label">氏名<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">フルネームでご入力ください。</p>
+          <input id="customerName" type="text" placeholder="例：山田 太郎" autocomplete="name" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">住所（市町村まで）<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">例：東京都渋谷区 / 大阪府大阪市北区</p>
+          <input id="addressCity" type="text" placeholder="例：東京都渋谷区" autocomplete="address-level2" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">電話番号<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">ハイフン有無どちらでもOKです。</p>
+          <input id="phone" type="tel" inputmode="tel" placeholder="例：090-1234-5678" autocomplete="tel" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">生年月日<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">日付を選択してください。</p>
+          <input id="birthday" type="date" required />
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">アレルギーの有無<span class="req">*</span></div>
+        <div class="control">
+          <select id="allergy" required>
+            <option value="">—</option>
+            <option value="なし">なし</option>
+            <option value="あり">あり</option>
+          </select>
+
+          <div class="subControl" id="allergyDetailWrap" style="display:none;">
+            <p class="hint">「あり」の場合、該当するものを選択してください（複数可）。</p>
+
+            <div class="chkGrid">
+              <label class="chk"><input type="checkbox" id="allergyGel" value="ジェル" />ジェル</label>
+              <label class="chk"><input type="checkbox" id="allergyFood" value="食品" />食品</label>
+              <label class="chk"><input type="checkbox" id="allergyMetal" value="金属" />金属</label>
+              <label class="chk"><input type="checkbox" id="allergyUV" value="紫外線" />紫外線</label>
+              <label class="chk"><input type="checkbox" id="allergyDisinfectAlcohol" value="消毒用アルコール" />消毒用アルコール</label>
+              <label class="chk"><input type="checkbox" id="allergyOther" value="その他" />その他</label>
+            </div>
+
+            <div class="subControl" id="allergyOtherWrap" style="display:none;">
+              <p class="hint">「その他」の場合、内容をご記入ください。</p>
+              <input id="allergyOtherText" type="text" placeholder="例：ラテックス、香料 など" />
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">お悩み<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">例：爪が薄い／折れやすい／浮きやすい等</p>
+          <textarea id="trouble" placeholder="お悩みをご記入ください" required></textarea>
+        </div>
+      </div>
+
+      <div class="row">
+        <div class="label">ご要望<span class="req">*</span></div>
+        <div class="control">
+          <p class="hint">例：希望デザイン、生活スタイル、長さ・形など</p>
+          <textarea id="request" placeholder="ご要望をご記入ください" required></textarea>
+        </div>
+      </div>
+
+      <!-- 同意書 -->
+      <div class="row">
+        <div class="label">同意書<span class="req">*</span></div>
+        <div class="control">
+          <div class="agreeBlock">
+            <label class="agreeLine">
+              <input id="agreeConsent" type="checkbox" disabled />
+              <span>同意書に同意する</span>
+            </label>
+            <small class="hint">※ポップアップ内を下までスクロールすると「同意する」が押せます。</small>
+            <button class="pillGreen" type="button" id="openConsent">内容を確認する</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="actionsRow">
+        <div class="twoBtns">
+          <button class="pillConfirm" type="button" id="toConfirm" disabled>確認</button>
+        </div>
+      </div>
+    </form>
+  </main>
+
+  <!-- 確認画面 -->
+  <main class="sheet confirm" id="confirmView" aria-live="polite">
+    <div style="padding:14px;">
+      <h2>入力内容の確認</h2>
+      <div class="summary" id="summary"></div>
+
+      <div class="confirmActions">
+        <button class="ghost" type="button" id="backBtn">戻る</button>
+        <button class="send" type="button" id="sendBtn">送信</button>
+      </div>
+    </div>
+  </main>
+
+  <!-- 同意書 モーダル -->
+  <div class="modalOverlay" id="consentModal" role="dialog" aria-modal="true" aria-labelledby="consentTitle">
+    <div class="modal">
+      <div class="modalHeader">
+        <div id="consentTitle">同意書</div>
+        <button class="modalClose" type="button" data-close="consentModal">閉じる</button>
+      </div>
+
+      <div class="modalBody" id="consentBody">
+        <h3>【ジェルネイルの装着期間】</h3>
+        <div>
+          施術後のジェルネイルの装着期間は3-4週間が目安となっております。<br/>
+          お爪の状態によっては期間を早めたりなどの調整が必要な場合もございます。
+          <div class="danger" style="margin-top:10px;">
+            長期間の装着は自爪の剥離・その他トラブルの原因になります。<br/>
+            また、取扱い方が不十分（激しくぶつける・大きな負荷をかけるなど）による、損傷については一切の責を負いかねますのでご了承くださいませ。
+          </div>
+        </div>
+
+        <h3>【施術中の異変】</h3>
+        <div>
+          施術中に痒みや体調不良など、体調に異変を感じた場合はすぐにお申し出頂き、医療機関を受診されて下さい。
+        </div>
+
+        <h3>【お子様連れのお客様】</h3>
+        <div class="danger">
+          サロン内にはたくさんのネイル器具や様々な薬剤などがあり大変危険です。<br/>
+          万が一、誤飲や接触による怪我があった場合は一切の責任を負いかねます。
+        </div>
+        <div style="margin-top:10px;">
+          また、お子様のお相手などで施術にお時間がかかる場合は、メニューの変更をして頂く場合がございます。
+        </div>
+
+        <h3>【当サロンからの予約変更のお願い】</h3>
+        <div>
+          当店都合による、ご予約変更ご協力のお客様には、施術料金（物販除く）から２０％オフさせて頂きます。<br/>
+          <span class="danger">※台風や大雪などの天災・２か月以降の先のご予約は対象外となります。</span>
+        </div>
+
+        <h3>【その他】</h3>
+        <ul>
+          <li>画像の持ち込みも可能ですが、他店ネイリストさんの癖・使用材料の違い・当店に無いパーツもございますので、全く同じ内容は出来かねますのでご了承下さい。</li>
+          <li>駐車場での事故については、当サロンでは責任を負いかねますのでご了承下さい。</li>
+        </ul>
+      </div>
+
+      <div class="modalFooter">
+        <button class="agreeBtn" type="button" id="agreeConsentBtn" disabled>同意する</button>
+      </div>
+    </div>
+  </div>
+
+  <!-- LIFF -->
+  <script src="https://static.line-scdn.net/liff/edge/2.1/sdk.js"></script>
+
+  <script>
+    // ★必要に応じて差し替えてください
+    const LIFF_ID = "YOUR_LIFF_ID";
+
+    const el = (id) => document.getElementById(id);
+
+    const inputView = el("inputView");
+    const confirmView = el("confirmView");
+    const summaryEl = el("summary");
+
+    const customerName = el("customerName");
+    const addressCity = el("addressCity");
+    const phone = el("phone");
+    const birthday = el("birthday");
+
+    const allergy = el("allergy");
+    const allergyDetailWrap = el("allergyDetailWrap");
+    const allergyGel = el("allergyGel");
+    const allergyFood = el("allergyFood");
+    const allergyMetal = el("allergyMetal");
+    const allergyUV = el("allergyUV");
+    const allergyDisinfectAlcohol = el("allergyDisinfectAlcohol");
+    const allergyOther = el("allergyOther");
+    const allergyOtherWrap = el("allergyOtherWrap");
+    const allergyOtherText = el("allergyOtherText");
+
+    const trouble = el("trouble");
+    const request = el("request");
+
+    const toConfirm = el("toConfirm");
+    const backBtn = el("backBtn");
+    const sendBtn = el("sendBtn");
+
+    // 同意（チェック）
+    const agreeConsent = el("agreeConsent");
+
+    // 開くボタン
+    const openConsent = el("openConsent");
+
+    // モーダル
+    const consentModal = el("consentModal");
+    const consentBody = el("consentBody");
+    const agreeConsentBtn = el("agreeConsentBtn");
+
+    document.addEventListener("DOMContentLoaded", async () => {
+      try { await liff.init({ liffId: LIFF_ID }); }
+      catch (e) { console.warn("LIFF init failed (ブラウザ確認中はOK):", e); }
+
+      syncConditionalUI();
+      refreshConfirmButton();
+    });
+
+    function refreshConfirmButton(){
+      toConfirm.disabled = !agreeConsent.checked;
+    }
+
+    function syncConditionalUI(){
+      const isAllergy = allergy.value === "あり";
+      allergyDetailWrap.style.display = isAllergy ? "block" : "none";
+
+      const allergyChecks = [
+        allergyGel, allergyFood, allergyMetal, allergyUV, allergyDisinfectAlcohol, allergyOther
+      ];
+
+      if(!isAllergy){
+        allergyChecks.forEach(chk => chk.checked = false);
+        allergyOtherText.value = "";
+        allergyOtherWrap.style.display = "none";
+      }else{
+        allergyOtherWrap.style.display = allergyOther.checked ? "block" : "none";
+        if(!allergyOther.checked) allergyOtherText.value = "";
+      }
+    }
+
+    allergy.addEventListener("change", syncConditionalUI);
+    [allergyGel, allergyFood, allergyMetal, allergyUV, allergyDisinfectAlcohol, allergyOther]
+      .forEach(chk => chk.addEventListener("change", syncConditionalUI));
+
+    // ===== モーダル：下までスクロールしたら同意ボタン有効 =====
+    function openModalWithScrollGate(modalEl, bodyEl, agreeBtnEl){
+      modalEl.style.display = "flex";
+      agreeBtnEl.disabled = true;
+      bodyEl.scrollTop = 0;
+
+      const check = () => {
+        const nearBottom = bodyEl.scrollTop + bodyEl.clientHeight >= bodyEl.scrollHeight - 4;
+        if(nearBottom) agreeBtnEl.disabled = false;
+      };
+
+      check();
+      bodyEl._scrollGateHandler && bodyEl.removeEventListener("scroll", bodyEl._scrollGateHandler);
+      bodyEl._scrollGateHandler = check;
+      bodyEl.addEventListener("scroll", check, { passive:true });
+    }
+
+    openConsent.addEventListener("click", () => openModalWithScrollGate(consentModal, consentBody, agreeConsentBtn));
+
+    // 閉じる（ボタン＆背景）
+    document.querySelectorAll("[data-close]").forEach(btn => {
+      btn.addEventListener("click", () => el(btn.dataset.close).style.display = "none");
+    });
+    consentModal.addEventListener("click", (e) => {
+      if(e.target === consentModal) consentModal.style.display = "none";
+    });
+
+    // 同意する → チェックON
+    agreeConsentBtn.addEventListener("click", () => {
+      agreeConsent.checked = true;
+      consentModal.style.display = "none";
+      refreshConfirmButton();
+    });
+
+    function getFormData(){
+      const selectedAllergies = [];
+      if(allergyGel.checked) selectedAllergies.push("ジェル");
+      if(allergyFood.checked) selectedAllergies.push("食品");
+      if(allergyMetal.checked) selectedAllergies.push("金属");
+      if(allergyUV.checked) selectedAllergies.push("紫外線");
+      if(allergyDisinfectAlcohol.checked) selectedAllergies.push("消毒用アルコール");
+
+      if(allergyOther.checked){
+        const t = allergyOtherText.value.trim();
+        selectedAllergies.push(t ? `その他：${t}` : "その他");
+      }
+
+      const d = {
+        name: customerName.value.trim(),
+        addressCity: addressCity.value.trim(),
+        phone: phone.value.trim(),
+        birthday: birthday.value,
+        allergy: allergy.value,
+        trouble: trouble.value.trim(),
+        request: request.value.trim(),
+        selectedAllergies
+      };
+
+      // 表示用
+      if(d.allergy !== "あり"){
+        d.allergyText = "なし";
+      }else{
+        d.allergyText = selectedAllergies.length
+          ? `あり（${selectedAllergies.join("、")}）`
+          : "あり（未選択）";
+      }
+
+      return d;
+    }
+
+    function validate(){
+      const d = getFormData();
+
+      if(!d.name){ alert("氏名を入力してください。"); customerName.focus(); return null; }
+      if(!d.addressCity){ alert("住所（市町村まで）を入力してください。"); addressCity.focus(); return null; }
+      if(!d.phone){ alert("電話番号を入力してください。"); phone.focus(); return null; }
+      if(!d.birthday){ alert("生年月日を選択してください。"); birthday.focus(); return null; }
+
+      if(!d.allergy){ alert("アレルギーの有無を選択してください。"); allergy.focus(); return null; }
+      if(d.allergy === "あり"){
+        if(!d.selectedAllergies.length){
+          alert("アレルギー「あり」の場合、該当する項目を選択してください。");
+          return null;
+        }
+        if(allergyOther.checked && !allergyOtherText.value.trim()){
+          alert("アレルギー「その他」の内容をご記入ください。");
+          allergyOtherText.focus();
+          return null;
+        }
+      }
+
+      if(!d.trouble){ alert("お悩みをご記入ください。"); trouble.focus(); return null; }
+      if(!d.request){ alert("ご要望をご記入ください。"); request.focus(); return null; }
+
+      if(!agreeConsent.checked){ alert("同意書を確認し、同意してください。"); return null; }
+
+      return d;
+    }
+
+    // confirm step
+    toConfirm.addEventListener("click", () => {
+      const d = validate();
+      if(!d) return;
+
+      const rows = [
+        ["氏名", d.name],
+        ["住所（市町村まで）", d.addressCity],
+        ["電話番号", d.phone],
+        ["生年月日", d.birthday],
+        ["アレルギーの有無", d.allergyText],
+        ["お悩み", d.trouble],
+        ["ご要望", d.request],
+        ["同意書", "同意済み"],
+      ];
+
+      summaryEl.innerHTML = rows.map(([k,v]) => `
+        <div class="sumRow">
+          <div class="sumKey">${escapeHtml(k)}</div>
+          <div class="sumVal">${escapeHtml(v)}</div>
+        </div>
+      `).join("");
+
+      inputView.style.display = "none";
+      confirmView.style.display = "block";
+      window.scrollTo({ top:0, behavior:"smooth" });
+    });
+
+    // 確認画面の「戻る」
+    backBtn.addEventListener("click", () => {
+      confirmView.style.display = "none";
+      inputView.style.display = "block";
+      window.scrollTo({ top:0, behavior:"smooth" });
+    });
+
+    // send
+    sendBtn.addEventListener("click", async () => {
+      const d = validate();
+      if(!d) return;
+
+      const text =
+`≪ネイルカルテ≫
+【氏名】${d.name}
+【住所（市町村まで）】${d.addressCity}
+【電話番号】${d.phone}
+【生年月日】${d.birthday}
+【アレルギーの有無】${d.allergyText}
+【お悩み】${d.trouble}
+【ご要望】${d.request}
+【同意書】同意済み`;
+
+      try{
+        if(window.liff && liff.isInClient && liff.isInClient()){
+          await liff.sendMessages([{ type:"text", text }]);
+          alert("ご記入ありがとうございます。");
+          liff.closeWindow();
+        }else{
+          alert("（ブラウザ確認）送信テキストをコンソールに出力しました。");
+          console.log(text);
+        }
+      }catch(e){
+        console.error(e);
+        alert("送信に失敗しました。もう一度お試しください。");
+      }
+    });
+
+    function escapeHtml(s){
+      return String(s)
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#039;");
+    }
+  </script>
+</body>
+</html>
